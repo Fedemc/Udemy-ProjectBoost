@@ -5,8 +5,11 @@ using UnityEngine;
 
 public class Rocket : MonoBehaviour {
 
-    private Rigidbody rigidBody;
-    private AudioSource audioSource; 
+    Rigidbody rigidBody;
+    AudioSource audioSource;
+    [SerializeField] float rcsThrust = 100f;
+    [SerializeField] float mainThrust = 20f;
+
 
     // Use this for initialization
     void Start()
@@ -18,35 +21,60 @@ public class Rocket : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
     {
-        ProcessInput();
+        Thrust();
+        Rotate();
 	}
 
-    private void ProcessInput()
+    private void Thrust()
     {
-        if(Input.GetKey(KeyCode.Space))
+        if (Input.GetKey(KeyCode.Space))
         {
-            print("Space pressed");
-            rigidBody.AddRelativeForce(Vector3.up);
-            if(!audioSource.isPlaying)
+            //print("Space pressed");
+            rigidBody.AddRelativeForce(Vector3.up * mainThrust);
+            if (!audioSource.isPlaying)
             {
                 audioSource.Play();
             }
-            
         }
         else
         {
             audioSource.Stop();
         }
-
-
-        if(Input.GetKey(KeyCode.A))
-        {
-            transform.Rotate(Vector3.forward);
-        }
-        else if(Input.GetKey(KeyCode.D))
-        {
-            transform.Rotate(-Vector3.forward);
-        }
-
     }
+
+    private void Rotate()
+    {
+        rigidBody.freezeRotation = true;
+       
+        float rotationThisFrame = rcsThrust * Time.deltaTime;
+
+        if (Input.GetKey(KeyCode.A))
+        {
+            
+            transform.Rotate(Vector3.forward * rotationThisFrame);
+        }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            transform.Rotate(-Vector3.forward * rotationThisFrame);
+        }
+
+
+        rigidBody.freezeRotation = false;
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        switch(collision.gameObject.tag)
+        {
+            case "Friendly": print("OK");
+                break;
+
+            case "PickUp": print("Item picked up!");
+                break;
+            
+            default: print("Dead!");
+                break;
+        }
+    }
+
 }

@@ -16,6 +16,7 @@ public class Rocket : MonoBehaviour
     [SerializeField] ParticleSystem mainEngineParticles;
     [SerializeField] ParticleSystem deathParticles;
     [SerializeField] ParticleSystem levelCompleteParticles;
+    [SerializeField] float levelLoadDelay=2f;
 
     enum State {Alive, Dying, Transcending};
     State state = State.Alive;
@@ -53,7 +54,7 @@ public class Rocket : MonoBehaviour
 
     private void ApplyThrust()
     {
-        rigidBody.AddRelativeForce(Vector3.up * mainThrust);
+        rigidBody.AddRelativeForce(Vector3.up * mainThrust * Time.deltaTime);
         if (!audioSource.isPlaying)
         {
             audioSource.PlayOneShot(mainEngine);
@@ -69,7 +70,6 @@ public class Rocket : MonoBehaviour
 
         if (Input.GetKey(KeyCode.A))
         {
-            
             transform.Rotate(Vector3.forward * rotationThisFrame);
         }
         else if (Input.GetKey(KeyCode.D))
@@ -109,7 +109,7 @@ public class Rocket : MonoBehaviour
         audioSource.PlayOneShot(levelCompleteSound);
         levelCompleteParticles.Play();
         state = State.Transcending;
-        Invoke("LoadNextLevel", 1f);     //Parametrizar el tiempo de espera
+        Invoke("LoadNextLevel", levelLoadDelay);     //Parametrizar el tiempo de espera
     }
 
     private void StartDeathSequence()
@@ -118,7 +118,7 @@ public class Rocket : MonoBehaviour
         audioSource.Stop();
         audioSource.PlayOneShot(deathSound);
         deathParticles.Play();
-        Invoke("LoadFirstLevel", 1f);
+        Invoke("LoadFirstLevel", levelLoadDelay);
     }
 
     private void LoadFirstLevel()

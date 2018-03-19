@@ -16,11 +16,11 @@ public class Rocket : MonoBehaviour
     [SerializeField] ParticleSystem mainEngineParticles;
     [SerializeField] ParticleSystem deathParticles;
     [SerializeField] ParticleSystem levelCompleteParticles;
-    [SerializeField] float levelLoadDelay=2f;
+    [SerializeField] float levelLoadDelay = 2f;
 
-    enum State {Alive, Dying, Transcending};
-    State state = State.Alive;
-    Boolean collisionsEnabled = true;
+    enum State { Alive, Dying, Transcending };
+    bool isTransitioning = false;
+    bool collisionsEnabled = true;
 
     // Use this for initialization
     void Start()
@@ -33,7 +33,7 @@ public class Rocket : MonoBehaviour
 	void Update ()
     {
         //Detener sonido al morir
-        if(state==State.Alive)
+        if(!isTransitioning)
         {
             RespondToThrustInput();
             RespondToRotateInput();
@@ -68,9 +68,14 @@ public class Rocket : MonoBehaviour
         }
         else
         {
-            audioSource.Stop();
-            mainEngineParticles.Stop();
+            StopApplyingThrust();
         }
+    }
+
+    private void StopApplyingThrust()
+    {
+        audioSource.Stop();
+        mainEngineParticles.Stop();
     }
 
     private void ApplyThrust()
@@ -85,7 +90,7 @@ public class Rocket : MonoBehaviour
 
     private void RespondToRotateInput()
     {
-        rigidBody.freezeRotation = true;
+        rigidBody.angularVelocity = Vector3.zero;
        
         float rotationThisFrame = rcsThrust * Time.deltaTime;
 
@@ -97,14 +102,11 @@ public class Rocket : MonoBehaviour
         {
             transform.Rotate(-Vector3.forward * rotationThisFrame);
         }
-
-
-        rigidBody.freezeRotation = false;
     }
 
     void OnCollisionEnter(Collision collision)
     {
-        if(state!=State.Alive || !collisionsEnabled)
+        if(isTransitioning || !collisionsEnabled)
         {
             return;
         }
@@ -129,13 +131,13 @@ public class Rocket : MonoBehaviour
         audioSource.Stop();
         audioSource.PlayOneShot(levelCompleteSound);
         levelCompleteParticles.Play();
-        state = State.Transcending;
+        isTransitioning = true;
         Invoke("LoadNextLevel", levelLoadDelay);     //Parametrizar el tiempo de espera
     }
 
     private void StartDeathSequence()
     {
-        state = State.Dying;
+        isTransitioning = true;
         audioSource.Stop();
         audioSource.PlayOneShot(deathSound);
         deathParticles.Play();
@@ -149,6 +151,15 @@ public class Rocket : MonoBehaviour
 
     private void LoadNextLevel()
     {
-        SceneManager.LoadScene(1);      //Permitir mas de 2 niveles
+        int currentSceneIndex=SceneManager.GetActiveScene().buildIndex;
+        if(currentSceneIndex+1 == SceneManager.sceneCountInBuildSettings)
+        {
+            SceneManager.LoadScene(0);
+        }
+        else
+        {
+            SceneManager.LoadScene(currentSceneIndex + 1);
+        }
+        
     }
 }
